@@ -1,7 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 import fake_useragent
-import time
 import json
 
 numbers_page = 35
@@ -33,11 +32,28 @@ def get_links():
         except Exception as q:
             print(f'{q}')
 
-        time.sleep(1)
+def get_info(link):
+    ua = fake_useragent.UserAgent()
+    response = requests.get(
+        url=link,
+        headers={'user-agent': ua.random}
+    )
+    if response.status_code != 200:
+        return
+    soup = BeautifulSoup(response.content, 'lxml')
 
+    try:
+        name = soup.find('h1', 'product-intro__title').text
+        volume = soup.find('span', {'class': 'toogle-title'}).find('span').text
+        price = soup.find('strong').text
+    except:
+        name = 'default'
+        volume = 'None'
+        price = 'None'
+    info = [name, volume[0], price.split('р')[0]]
 
-
+    return info
 
 if __name__ == "__main__":
     for l in get_links():
-        print(l)
+        print(get_info(l))
