@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import fake_useragent
-import json
+import csv
 
 numbers_page = 35
 
@@ -44,16 +44,20 @@ def get_info(link):
 
     try:
         name = soup.find('h1', 'product-intro__title').text
-        volume = soup.find('span', {'class': 'toogle-title'}).find('span').text
-        price = soup.find('strong').text
+        volume = int(soup.find('span', {'class': 'toogle-title'}).find('span').text[0])
+        price = float(soup.find('strong').text.replace(' ', '').split('р')[0].replace(',', '.'))
     except:
         name = 'default'
         volume = 'None'
         price = 'None'
-    info = [name, volume[0], price.split('р')[0]]
+    info = [name, volume, price]
 
     return info
 
 if __name__ == "__main__":
     for l in get_links():
-        print(get_info(l))
+        data = get_info(l)
+
+        with open('price_vanille.csv', 'a', newline='') as f:
+            writer = csv.writer(f, delimiter=",")
+            writer.writerow(data)
