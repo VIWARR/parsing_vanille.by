@@ -4,25 +4,40 @@ import fake_useragent
 import time
 import json
 
-url_vanille = 'https://vanille.by/otlivant-duhi-na-razliv?page=35'
+numbers_page = 35
 
-def get_links():
+def get_soup(number):
     ua = fake_useragent.UserAgent()
-    data = requests.get(
-        url=url_vanille,
+    response = requests.get(
+        url=f'https://vanille.by/otlivant-duhi-na-razliv?page={number}',
         headers={'user-agent': ua.random}
     )
-
-    if data.status_code != 200:
+    if response.status_code != 200:
         return
+    soup = BeautifulSoup(response.content, 'lxml')
+    return soup
 
-    soup = BeautifulSoup(data.content, 'lxml')
+
+def get_links():
+    soup = get_soup(numbers_page)
     try:
         page_count = int(soup.find('div', {'class': 'content__flex-container'}).find_all('li')[-1].find('span').text)
     except:
         return
-    print(page_count)
+
+    for page in range(page_count):
+        try:
+            soup = get_soup(page)
+            for link in soup.find_all('a', {'class': 'product-cut__title-link'}):
+                yield f"https://vanille.by{link.attrs['href']}"
+        except Exception as q:
+            print(f'{q}')
+
+        time.sleep(1)
+
+
 
 
 if __name__ == "__main__":
-    get_links()
+    for l in get_links():
+        print(l)
