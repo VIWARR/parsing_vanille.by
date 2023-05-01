@@ -2,8 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import fake_useragent
 import csv
+import pandas as pd
 
-numbers_page = 35
+numbers_page = 36
 
 def get_soup(number):
     ua = fake_useragent.UserAgent()
@@ -15,7 +16,6 @@ def get_soup(number):
         return
     soup = BeautifulSoup(response.content, 'lxml')
     return soup
-
 
 def get_links():
     soup = get_soup(numbers_page)
@@ -44,20 +44,21 @@ def get_info(link):
 
     try:
         name = soup.find('h1', 'product-intro__title').text
-        volume = int(soup.find('span', {'class': 'toogle-title'}).find('span').text[0])
-        price = float(soup.find('strong').text.replace(' ', '').split('р')[0].replace(',', '.'))
+        volume = [(v.text.split(' ')[3]) for v in soup.find_all('span', {'class': 'toogle-title'})]
+        price = [(p.find('strong').text.replace(' ', '').split('р')[0]) for p in soup.find_all('span', class_='toggle btn')]
     except:
         name = 'default'
         volume = 'None'
         price = 'None'
     info = [name, volume, price]
-
     return info
 
 if __name__ == "__main__":
     for l in get_links():
-        data = get_info(l)
+        info = get_info(l)
 
-        with open('price_vanille.csv', 'a', newline='') as f:
-            writer = csv.writer(f, delimiter=",")
-            writer.writerow(data)
+        data = dict(PRODUCT=info[0], VOLUME=info[1], PRICE=info[2])
+        df = pd.DataFrame(data)
+        df.to_csv(r'C:\Program Files\pythonProjects\parsing\parsing_vanille.by\price_vanille.csv',
+                  sep=';', index=False, mode='a'
+                  )
